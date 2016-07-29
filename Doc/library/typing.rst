@@ -201,6 +201,7 @@ case, where the type variable is not variadic, every argument must be the same
 type ``T``, and the type of ``args`` is considered to be :class:`Iterable[T]`:
 
 ::
+
    from typing import TypeVar
 
    T = TypeVar('T')
@@ -215,6 +216,7 @@ When the type variable for ``args`` is variadic, it's considered to be a series
 of however many different normal type variables are needed:
 
 ::
+
    from typing import TypeVar, Generic
 
    T  = TypeVar('T')
@@ -222,7 +224,7 @@ of however many different normal type variables are needed:
 
    def wrap_args(*args: Ts) -> Tuple[Wrapper[Ts], ...]:
        return tuple(Wrapper(arg) for arg in args)
-   
+
    class Wrapper(Generic[T]):
 
        contents = None  # type: T
@@ -239,6 +241,7 @@ returns ``Tuple[int, str, float]``, etc.  When the typechecker doesn't know how
 many arguments are given or their type, it falls back to :class:`Any`:
 
 ::
+
    l = [4, "hello", 3.14159]
    wrap_args(*l) # returns Tuple[Any, ...]
 
