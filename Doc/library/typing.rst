@@ -180,6 +180,70 @@ A generic class can be an ABC by including abstract methods or properties,
 and generic classes can also have ABCs as base classes without a metaclass
 conflict.  Generic metaclasses are not supported.
 
+Functions that take ``*args``
+-----------------------------
+
+Some functions take an arbitrary number of arguments, and capture them in a
+``*args`` parameter.  When such a parameter has a type, it's considered to be
+the type of each of the arbitrary number of arguments:
+
+::
+
+   def add_up(*args: int) -> int:  # Accepts any number of ints
+       ret = 0:
+       for i in args:
+          ret += i
+       return ret
+
+When the type of ``*args`` has a type variable in it, the behavior depends on
+whether the type variable is declared to be ``variadic = True``. In the default
+case, where the type variable is not variadic, every argument must be the same
+type ``T``, and the type of ``args`` is considered to be :class:`Iterable[T]`:
+
+::
+   from typing import TypeVar
+
+   T = TypeVar('T')
+
+   def coalesce(*args: T) -> T:
+       for arg in args:
+           if arg is not None:
+               return arg
+       return None
+
+When the type variable for ``args`` is variadic, it's considered to be a series
+of however many different normal type variables are needed:
+
+::
+   from typing import TypeVar, Generic
+
+   T  = TypeVar('T')
+   Ts = TypeVar('Ts', variadic = True)
+
+   def wrap_args(*args: Ts) -> Tuple[Wrapper[Ts], ...]:
+       return tuple(Wrapper(arg) for arg in args)
+   
+   class Wrapper(Generic[T]):
+
+       contents = None  # type: T
+
+       def __init__(self, contents: T) -> None:
+           self.contents = contents
+
+       def get(self) -> T:
+           return self.contents
+
+In the above code, ``wrap_args(4)`` returns ``Tuple[int]``, ``wrap_args(4,
+"hello")`` returns ``Tuple[int, str]``; ``wrap_args(4, "hello", 3.14159)``
+returns ``Tuple[int, str, float]``, etc.  When the typechecker doesn't know how
+many arguments are given or their type, it falls back to :class:`Any`:
+
+::
+   l = [4, "hello", 3.14159]
+   wrap_args(*l) # returns Tuple[Any, ...]
+
+See the documentation for :class:`Tuple` and :class:`Callable` for the
+particular behavior of the literal ``...`` in this case.
 
 The :class:`Any` type
 ---------------------
@@ -304,8 +368,16 @@ The module defines the following classes, functions and decorators:
   to type variables T1 and T2.  ``Tuple[int, float, str]`` is a tuple
   of an int, a float and a string.
 
-  To specify a variable-length tuple of homogeneous type,
-  use literal ellipsis, e.g. ``Tuple[int, ...]``.
+  To specify a variable-length tuple, use a literal ellipsis, for example
+  ``Tuple[int, ...]``.  For basic types before the ellipsis, the tuple will be
+  of arbitrary length but uniform type.
+
+  If the type before the ellipsis contains a variadic type variable, the tuple
+  will be parameterized by a series of type variables with whatever length is
+  required by the context. For example, ``Tuple[Ts, ...]`` is equivalent to
+  ``Tuple[T_1, T_2, T_3]`` in a context where a ``*args`` of type ``Ts`` was
+  given three variables.  See the section titled "Functions that take ``*args``"
+  for details on variadic type variables.
 
 .. class:: Callable
 
@@ -315,11 +387,24 @@ The module defines the following classes, functions and decorators:
    values: the argument list and the return type.  The argument list
    must be a list of types; the return type must be a single type.
 
-   There is no syntax to indicate optional or keyword arguments,
-   such function types are rarely used as callback types.
-   ``Callable[..., ReturnType]`` could be used to type hint a callable
-   taking any number of arguments and returning ``ReturnType``.
+   There is no syntax to indicate keyword arguments, such function types are
+   rarely used as callback types.  ``Callable[..., ReturnType]`` is used to type
+   hint a callable taking any number of arguments and returning ``ReturnType``.
    A plain :class:`Callable` is equivalent to ``Callable[..., Any]``.
+
+   For functions that take ``*args``, a ``...`` is used in the argument list to
+   indicate an arbitrary-length repitition of the previous type (if present,
+   ``...`` must be the last thing in the argument list).
+
+   ``Callable[[int, ...], str]`` is a function that takes in any number of
+   integers.
+
+   If the previous type is variadic, ``...`` indicates an expansion of the
+   variadic type to the context-dependent number of arguments.
+   ``Callable[[List[Ts], ...], Tuple[Ts, ...]]`` is a function that takes some
+   number of lists as arguments and returns a tuple of exactly the types of the
+   contents of those lists.  See the section titled "Functions that take
+   ``*args``" for details on variadic type variables.
 
 .. class:: Generic
 
