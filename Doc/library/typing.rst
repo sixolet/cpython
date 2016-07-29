@@ -235,10 +235,12 @@ of however many different normal type variables are needed:
        def get(self) -> T:
            return self.contents
 
-In the above code, ``wrap_args(4)`` returns ``Tuple[int]``, ``wrap_args(4,
-"hello")`` returns ``Tuple[int, str]``; ``wrap_args(4, "hello", 3.14159)``
-returns ``Tuple[int, str, float]``, etc.  When the typechecker doesn't know how
-many arguments are given or their type, it falls back to :class:`Any`:
+In the above code, ``wrap_args(4)`` returns ``Tuple[Wrapper[int]]``,
+``wrap_args(4, "hello")`` returns ``Tuple[Wrapper[int], Wrapper[str]]``;
+``wrap_args(4, "hello", 3.14159)`` returns
+``Tuple[Wrapper[int], Wrapper[str], Wrapper[float]]``, etc.
+When the typechecker doesn't know how many arguments
+are given or their type, it falls back to :class:`Any`:
 
 ::
 
