@@ -317,6 +317,11 @@ The module defines the following classes, functions and decorators:
     for the type variable must be a subclass of the boundary type,
     see :pep:`484`.
 
+    Type variables may be marked variadic by passing ``variadic=True``. A
+    variadic type variable expands into a sequence of type variables of the
+    right length for the arguments present.  See the section titled "Functions
+    that take ``*args``" for details.
+
 .. class:: Union
 
    Union type; ``Union[X, Y]`` means either X or Y.
